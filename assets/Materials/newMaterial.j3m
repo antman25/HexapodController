@@ -1,0 +1,11 @@
+Material testMaterial : Common/MatDefs/Misc/ColoredTextured.j3md {
+     MaterialParameters {
+        Color : 1.0 0.0 0.2 1.0
+        ColorMap : Textures/BlackAluminum.jpg
+     }
+    AdditionalRenderState {
+      FaceCull Off
+      Wireframe Off
+      DepthWrite On
+    }
+}
