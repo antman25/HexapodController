@@ -48,12 +48,15 @@ public class HexapodPainter extends JPanel {
     private final float COXA_LENGTH = 29.0F;
     private final float FEMUR_LENGTH = 76.0F;
     private final float TIBIA_LENGTH = 106.0F;
-    
+    private final int offsetWall = 125;
+    private final int max_grid = 400;
+            
     private final float PI_OVER_180 = (float)Math.PI / 180.0F;
     
-    private Float offsetCoxa = 200.0F;
+    private Integer lowestHeight = 60;
     
-    private int offsetWall = 50;
+    
+    
     
     public void setFemurAngle(Float angle)
     {
@@ -89,17 +92,60 @@ public class HexapodPainter extends JPanel {
         rh.put(RenderingHints.KEY_RENDERING,RenderingHints.VALUE_RENDER_QUALITY);
         g2d.setRenderingHints(rh);
         
-        g2d.setColor(new Color(0, 0, 0));
+        g2d.setColor(new Color(255, 255, 255));
         
-        //g2d.drawLine((int)pointCoxa.getX(), (int)pointCoxa.getY(), (int)pointCoxa.getX(), (int)pointCoxa.getY());
-        g2d.drawLine (offsetWall,0,offsetWall,400);
-        g2d.drawLine (0,400 - (int)(offsetCoxa - TIBIA_LENGTH),400,400 - (int)(offsetCoxa - TIBIA_LENGTH));
+        
+        
+        g2d.drawLine (offsetWall,0,offsetWall,max_grid);
+        g2d.drawLine (0,offsetWall,max_grid,offsetWall);
+        g2d.setColor(new Color(255, 255, 0));
+        g2d.drawLine (0,offsetWall+lowestHeight,max_grid,offsetWall+lowestHeight);
+        
+        for (int i = -20;i < 30;i++)
+        {
+            if (i % 10 == 0)
+            {
+                if (i != 0)
+                {
+                    g2d.setColor(new Color(128, 128, 0));
+                    g2d.drawLine(offsetWall + i*10, 0,offsetWall + i*10,  400);
+                }
+            }
+            else if (i % 2 == 0)
+            {
+                g2d.setColor(new Color(255, 255, 255));
+                g2d.drawLine(offsetWall + i*10, offsetWall-4,offsetWall + i*10,  offsetWall +4);
+                g2d.setColor(new Color(0, 128, 128));
+                g2d.drawLine(offsetWall + i*10, 0,offsetWall + i*10,  400);
+            }
+            else
+            {
+                g2d.setColor(new Color(255, 255, 255));
+                g2d.drawLine(offsetWall + i*10,  offsetWall-2,offsetWall + i*10,   offsetWall +2);
+            }
+        }
 
+        for (int i = -20;i < 30;i++)
+        {
+            if (i % 2 == 0)
+            {
+                g2d.setColor(new Color(255, 255, 255));
+                g2d.drawLine(offsetWall-4,  offsetWall - i*10,offsetWall+4,   offsetWall - i*10);
+                g2d.setColor(new Color(0, 128, 128));
+                g2d.drawLine(offsetWall,  offsetWall - i*10,offsetWall+400,   offsetWall - i*10);
+            }
+            else
+            {
+                g2d.setColor(new Color(255, 255, 255));
+                g2d.drawLine(offsetWall-2,  offsetWall - i*10,offsetWall+2,   offsetWall - i*10);
+            }
+        }
         
         Point2D pointDrawCoxa = convertPoint((float)pointCoxa.getX(),(float)pointCoxa.getY());
         Point2D pointDrawFemur = convertPoint((float)pointFemur.getX(),(float)pointFemur.getY());
         Point2D pointDrawTibia = convertPoint((float)pointTibia.getX(),(float)pointTibia.getY());
         
+        g2d.setColor(new Color(255, 0, 0));
         g2d.drawOval((int)pointDrawCoxa.getX() - 10,(int)pointDrawCoxa.getY() - 10, 20,20);
         g2d.drawLine((int)segmentWallToCoxa.getX1(),(int)segmentWallToCoxa.getY1(),(int)segmentWallToCoxa.getX2(), (int)segmentWallToCoxa.getY2());
         
@@ -112,9 +158,10 @@ public class HexapodPainter extends JPanel {
         g2d.drawOval((int)pointDrawTibia.getX() - 10,(int)pointDrawTibia.getY() - 10, 20,20);
     }
     
-    public void setCoxaOffset(Float offset)
+    public void setCoxaOffset(Integer offset)
     {
-        this.offsetCoxa = offset;
+        this.lowestHeight = offset;
+        pointWall = new Point2D.Float(0,0);
         setAngles(angleFemur,angleTibia);
     }
     
@@ -122,22 +169,25 @@ public class HexapodPainter extends JPanel {
     {
         this.angleFemur = angleFemur;
         this.angleTibia = angleTibia;
-        pointCoxa = new Point2D.Float(offsetWall + COXA_LENGTH,offsetCoxa);
         
-        float x=0;
+        //angleFemur = -angleFemur + 90;
+        
+        float x=COXA_LENGTH;
         float y=0;
+        pointCoxa = new Point2D.Float(x, y);
+        //System.out.println("Coxa: [" + Double.toString(pointCoxa.getX()) + " , " + Double.toString(pointCoxa.getY()) + "] ");
         
-        x = offsetWall + COXA_LENGTH + (float)(FEMUR_LENGTH*Math.cos((double)(angleFemur * PI_OVER_180)));
-        y = offsetCoxa + (float)(FEMUR_LENGTH*Math.sin((double)(angleFemur * PI_OVER_180)));
+        
+        x += (float)(FEMUR_LENGTH*Math.cos((double)((angleFemur) * PI_OVER_180)));
+        y += (float)(FEMUR_LENGTH*Math.sin((double)((angleFemur)* PI_OVER_180)));
         pointFemur = new Point2D.Float(x ,y);
-        //pointFemur = convertPoint(offsetWall + COXA_LENGTH + FEMUR_LENGTH , offsetCoxa);
-        x += (float)(TIBIA_LENGTH*Math.cos((double)((angleTibia - 90) * PI_OVER_180)));
-        y += (float)(TIBIA_LENGTH*Math.sin((double)((angleTibia - 90)* PI_OVER_180)));
+        System.out.println("Femur- X:" + Float.toString(x) + " Y: " + Float.toString(y) + "] ");
+        
+        x += (float)(TIBIA_LENGTH*Math.cos((double)((angleFemur + angleTibia + 90) * PI_OVER_180)));   
+        y +=  (float)(TIBIA_LENGTH*Math.sin((double)((angleFemur + angleTibia +90 )* PI_OVER_180)));
         pointTibia = new Point2D.Float(x,y);
-        //pointTibia = convertPoint(offsetWall + COXA_LENGTH + FEMUR_LENGTH , offsetCoxa - TIBIA_LENGTH);
+        System.out.println("Tibia- X:" + Float.toString(x) + " Y: " + Float.toString(y) + "] ");
         
-        
-        //pointTibia = convertPoint
         Point2D transWall = convertPoint(pointWall);
         Point2D transCoxa = convertPoint(pointCoxa);
         Point2D transFemur = convertPoint(pointFemur);
@@ -165,19 +215,14 @@ public class HexapodPainter extends JPanel {
         alpha_rectangle = 1f;
         alpha_ellipse = 1f;*/
         
-        pointWall = convertPoint(offsetWall,offsetCoxa);
+        pointWall = new Point2D.Float(0,lowestHeight);
         setAngles(0F, 0F);
     }
     
     Point2D convertPoint(float x, float y)
-    {
-        Insets insets = getInsets();
-
-        int w = 400 - insets.left - insets.right;
-        int h = 400 - insets.top - insets.bottom;
-        
-        float transX = (float)x;
-        float transY = (float)h-y;
+    {       
+        float transX = (float)x + offsetWall;
+        float transY = (float)y + offsetWall;
         
         Point2D result = new Point2D.Float(transX, transY);
         return result;

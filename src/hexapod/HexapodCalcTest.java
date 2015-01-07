@@ -16,12 +16,19 @@ import javax.swing.DefaultListModel;
  */
 public class HexapodCalcTest extends javax.swing.JFrame {
 
+    private final float COXA_LENGTH = 29.0F;
+    private final float FEMUR_LENGTH = 76.0F;
+    private final float TIBIA_LENGTH = 106.0F;
+    
+    private final float DEG_TO_RAD = (float)Math.PI / 180.0F;
+    private final float RAD_TO_DEG = 180.0F / (float)Math.PI;
     
     private final Integer SERVO_MAX = 2400;
     private final Integer SERVO_MIN = 600;
     
     TCPClient hexapod;
     Thread threadHexapod;
+    HexapodLeg leg;
     
     DefaultListModel modelLog;
     
@@ -36,10 +43,11 @@ public class HexapodCalcTest extends javax.swing.JFrame {
         spinnerCoxa.setValue(1500);
         spinnerFemur.setValue(1500);
         spinnerTibia.setValue(1500);
+        spinnerDrawCoxaOffset.setValue(70);
         
         //HexapodPainter painter = new HexapodPainter();
         //panelLeg.add("Center", painter);
-        
+        leg = new HexapodLeg((double)COXA_LENGTH,(double)FEMUR_LENGTH,(double)TIBIA_LENGTH,0,0,0);
     }
     
     void addLog(String data)
@@ -49,6 +57,62 @@ public class HexapodCalcTest extends javax.swing.JFrame {
         modelLog.addElement(dateFormat.format(date)+ " - " + data);
     }
     
+    private void CalcIK()
+    {
+        Double XVal = Double.parseDouble(textXVal.getText());
+        Double YVal = Double.parseDouble(textYVal.getText());
+        Double ZVal = Double.parseDouble(textZVal.getText());
+        leg.CalculateIK(XVal, YVal, ZVal);
+        
+        Double dist = Math.sqrt((XVal - (double)COXA_LENGTH) * (XVal - (double)COXA_LENGTH) + (YVal * YVal));
+        if (dist > (TIBIA_LENGTH + FEMUR_LENGTH))
+        {
+            System.out.println("NO SOLUTION POSSIBLE");
+            return;
+        }
+        
+        Double LegLength = Math.sqrt(XVal*XVal + ZVal*ZVal);
+        System.out.println("LegLength = " + LegLength.toString());
+        
+        
+        Double lc = LegLength - COXA_LENGTH; 
+        Double HF = Math.sqrt((lc*lc) + (YVal*YVal));
+        System.out.println("HF = " + HF.toString());
+        Double A1 = Math.atan(lc / YVal) * RAD_TO_DEG;
+        System.out.println("A1 = " + A1.toString());
+        Double A2 = Math.acos( ((TIBIA_LENGTH*TIBIA_LENGTH) - (FEMUR_LENGTH*FEMUR_LENGTH) - (HF*HF)) / ( -2.0 * FEMUR_LENGTH * HF )) * RAD_TO_DEG;
+        System.out.println("A2 = " + A2.toString());
+        
+        Double FemurAngle = (A1 + A2);
+        
+        Double B1 = Math.acos( ((HF*HF) - (TIBIA_LENGTH*TIBIA_LENGTH) - (FEMUR_LENGTH*FEMUR_LENGTH)) / ( -2.0 * FEMUR_LENGTH * TIBIA_LENGTH ))* RAD_TO_DEG;
+        System.out.println("B1 = " + B1.toString());
+        Double TibiaAngleServo = -(90 - B1) - 90;
+        Double TibiaAngle = TibiaAngleServo;
+        
+        Double CoxaAngle = Math.atan(ZVal / XVal) * RAD_TO_DEG;
+        System.out.println("IKFemur = " + FemurAngle.toString() + " IKFemurServo: " + Double.toString(-FemurAngle+90.0));
+        System.out.println("IKTibia = " + TibiaAngle.toString()+ " IKTibiaServo: " + Double.toString(TibiaAngle+90.0));
+        System.out.println("IKCoxa = " + CoxaAngle.toString()+ " IKCoxaServo: " + Double.toString(FemurAngle+90.0));
+        
+        /*Double X = (double)COXA_LENGTH;
+        Double Y = 0.0;
+        
+        System.out.println("X1: " + X.toString());
+        X += FEMUR_LENGTH*Math.sin(FemurAngle * DEG_TO_RAD);
+        Y += FEMUR_LENGTH*Math.cos(FemurAngle * DEG_TO_RAD);
+        
+        System.out.println("X2: " + X.toString());
+        X+= TIBIA_LENGTH*Math.sin((TibiaAngle +FemurAngle)* DEG_TO_RAD);
+        Y+= TIBIA_LENGTH*Math.cos((TibiaAngle +FemurAngle)* DEG_TO_RAD);
+        System.out.println("FinalX: " + X.toString());
+        System.out.println("FinalY: " + Y.toString());*/
+        
+        Float f = new Float (-FemurAngle+90.0);
+        Float t = new Float(TibiaAngle+90.0);
+        
+        hexapodPainter.setAngles(f, t);
+    }
     
     public Integer AngleToTime(float angle, Integer zero)
     {
@@ -88,7 +152,7 @@ public class HexapodCalcTest extends javax.swing.JFrame {
         Integer angleFemur = (Integer)spinnerDrawFemurAngle.getValue();
         Integer angleTibia = (Integer)spinnerDrawTibiaAngle.getValue();
         Integer offsetCoxa = (Integer)spinnerDrawCoxaOffset.getValue();
-        //hexapodPainter.setCoxaOffset((float)offsetCoxa);
+        hexapodPainter.setCoxaOffset(offsetCoxa);
         hexapodPainter.setAngles((float)angleFemur, (float)angleTibia);
     }
     
@@ -140,6 +204,14 @@ public class HexapodCalcTest extends javax.swing.JFrame {
         jLabel8 = new javax.swing.JLabel();
         spinnerDrawCoxaOffset = new javax.swing.JSpinner();
         jLabel9 = new javax.swing.JLabel();
+        jPanel3 = new javax.swing.JPanel();
+        jLabel6 = new javax.swing.JLabel();
+        jLabel10 = new javax.swing.JLabel();
+        textXVal = new javax.swing.JTextField();
+        textYVal = new javax.swing.JTextField();
+        buttonCalcIK = new javax.swing.JButton();
+        textZVal = new javax.swing.JTextField();
+        jLabel11 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         addWindowListener(new java.awt.event.WindowAdapter() {
@@ -322,7 +394,7 @@ public class HexapodCalcTest extends javax.swing.JFrame {
                 .addComponent(buttonSetTime))
         );
 
-        hexapodPainter.setBackground(new java.awt.Color(255, 255, 255));
+        hexapodPainter.setBackground(new java.awt.Color(0, 0, 0));
         hexapodPainter.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
 
         javax.swing.GroupLayout hexapodPainterLayout = new javax.swing.GroupLayout(hexapodPainter);
@@ -399,6 +471,64 @@ public class HexapodCalcTest extends javax.swing.JFrame {
                     .addComponent(jLabel8)))
         );
 
+        jPanel3.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+
+        jLabel6.setText("X Val");
+
+        jLabel10.setText("Y Val");
+
+        buttonCalcIK.setText("Calc IK");
+        buttonCalcIK.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttonCalcIKActionPerformed(evt);
+            }
+        });
+
+        jLabel11.setText("Z Val");
+
+        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
+        jPanel3.setLayout(jPanel3Layout);
+        jPanel3Layout.setHorizontalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addComponent(jLabel6)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(textXVal))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(buttonCalcIK))
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabel10)
+                            .addComponent(jLabel11))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(textZVal, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(textYVal))))
+                .addContainerGap())
+        );
+        jPanel3Layout.setVerticalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel6)
+                    .addComponent(textXVal, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel10)
+                    .addComponent(textYVal, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(textZVal, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel11))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(buttonCalcIK))
+        );
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -412,10 +542,10 @@ public class HexapodCalcTest extends javax.swing.JFrame {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(hexapodPainter, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(0, 125, Short.MAX_VALUE)
+                        .addGap(0, 113, Short.MAX_VALUE)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jPanel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
@@ -425,7 +555,11 @@ public class HexapodCalcTest extends javax.swing.JFrame {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(panelConvert, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(25, 25, 25)
+                                .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                         .addGap(0, 0, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
@@ -435,7 +569,9 @@ public class HexapodCalcTest extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 9, Short.MAX_VALUE)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(panelConvert, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
@@ -446,7 +582,7 @@ public class HexapodCalcTest extends javax.swing.JFrame {
                         .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(hexapodPainter, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 5, Short.MAX_VALUE)))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(textCommand, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -550,6 +686,11 @@ public class HexapodCalcTest extends javax.swing.JFrame {
         updateAngles();
     }//GEN-LAST:event_spinnerDrawCoxaOffsetStateChanged
 
+    private void buttonCalcIKActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonCalcIKActionPerformed
+        // TODO add your handling code here:
+        CalcIK();
+    }//GEN-LAST:event_buttonCalcIKActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -585,6 +726,7 @@ public class HexapodCalcTest extends javax.swing.JFrame {
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton buttonCalcIK;
     private javax.swing.JButton buttonConnect;
     private javax.swing.JButton buttonConvert;
     private javax.swing.JButton buttonDisconnect;
@@ -598,15 +740,19 @@ public class HexapodCalcTest extends javax.swing.JFrame {
     private javax.swing.JCheckBox checkTimeRR;
     private hexapod.HexapodPainter hexapodPainter;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
+    private javax.swing.JPanel jPanel3;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JList listLog;
     private javax.swing.JPanel panelConvert;
@@ -619,6 +765,9 @@ public class HexapodCalcTest extends javax.swing.JFrame {
     private javax.swing.JTextField textAngle;
     private javax.swing.JTextField textCommand;
     private javax.swing.JTextField textTime;
+    private javax.swing.JTextField textXVal;
+    private javax.swing.JTextField textYVal;
+    private javax.swing.JTextField textZVal;
     // End of variables declaration//GEN-END:variables
 }
 
