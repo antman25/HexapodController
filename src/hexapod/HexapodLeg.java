@@ -4,118 +4,135 @@
  */
 package hexapod;
 
+import com.jme3.bullet.collision.PhysicsCollisionObject;
+import com.jme3.bullet.collision.shapes.BoxCollisionShape;
+import com.jme3.bullet.collision.shapes.CapsuleCollisionShape;
+import com.jme3.bullet.collision.shapes.CollisionShape;
+import com.jme3.bullet.collision.shapes.CompoundCollisionShape;
+import com.jme3.bullet.control.RigidBodyControl;
+import com.jme3.bullet.joints.HingeJoint;
+import com.jme3.material.Material;
+import com.jme3.math.ColorRGBA;
+import com.jme3.math.FastMath;
+import com.jme3.math.Matrix3f;
+import com.jme3.math.Quaternion;
+import com.jme3.math.Transform;
+import com.jme3.math.Vector3f;
+import com.jme3.scene.Geometry;
+import com.jme3.scene.Node;
+import com.jme3.scene.Spatial;
+import com.jme3.scene.shape.Box;
+
 /**
  *
  * @author ANTMAN
  */
-public class HexapodLeg {
-    private Double X;    
-    private Double Y;
-    private Double Z;
-    
-    private Double angleCoxa;    
-    private Double angleFemur;
-    private Double angleTibia;
-    
-    private Double lenCoxa;
-    private Double lenFemur;
-    private Double lenTibia;
-    
-    private Integer offsetCoxa;
-    private Integer offsetFemur;
-    private Integer offsetTibia;
+public class HexapodLeg extends Node{
+    private static final float MASS_COXA = 1f;
+    private static final float MASS_FEMUR = 1f;
+    private static final float MASS_TIBIA = 10f;
+    private static final float FLOOR_FRICTION = 10000f;
     
     
-    private final Integer SERVO_MAX = 2400;
-    private final Integer SERVO_MIN = 600;
+    private HingeJoint jointCoxa;
+    private HingeJoint jointFemur;
+    private HingeJoint jointTibia;
     
-    private final Double DEG_TO_RAD = Math.PI / 180.0;
-    private final Double RAD_TO_DEG = 180.0 / Math.PI;
+    private RigidBodyControl controlCoxa;
+    private RigidBodyControl controlFemur;
+    private RigidBodyControl controlTibia;    
     
-    public Integer getCoxaServoPosition()
-    {
-        return AngleToTime(angleCoxa,offsetCoxa);
+    private Node nodeCoxa;
+    private Node nodeFemur;
+    private Node nodeTibia;
+    
+    private float angleCoxaTarget;
+    private float angleFemurTarget;
+    private float angleTibiaTarget;
+    
+    private float angleCoxaCurrent;
+    private float angleFemurCurrent;
+    private float angleTibiaCurrent;
+    
+    public static CollisionShape createCoxaShape() {
+        final CompoundCollisionShape epauleShape = new CompoundCollisionShape();
+        epauleShape.addChildShape(new BoxCollisionShape(new Vector3f(0.35f, .35f, 0.65f)), new Vector3f(0, 0, 0.65f));
+        //new BoxCollisionShape()
+        return epauleShape;
+    }
+
+    public static CollisionShape createFemurShape() {
+        final CompoundCollisionShape armShape = new CompoundCollisionShape();
+        final BoxCollisionShape box = new BoxCollisionShape(new Vector3f(.25f, 2.3f, .25f));
+
+        final Matrix3f rot = Matrix3f.IDENTITY;
+        rot.fromAngleAxis((FastMath.PI / 9) * 1, Vector3f.UNIT_X.mult(-1));
+        armShape.addChildShape(box, new Vector3f(.5f, 2.3f, .250f));
+        return armShape;
+    }
+
+    public static CollisionShape createTibiaShape() {
+        final CompoundCollisionShape handShape = new CompoundCollisionShape();
+        handShape.addChildShape(new CapsuleCollisionShape(.5f, 11.2f), new Vector3f(.5f, -2.9f, .5f));
+        return handShape;
     }
     
-    public Integer getFemurServoPosition()
-    {
-        return AngleToTime(angleFemur,offsetFemur);
+    public HexapodLeg(RigidBodyControl baseControl, Vector3f pivotBase, float angle)
+    {       
+        final Transform transform = new Transform(pivotBase, new Quaternion().fromAngleAxis(angle, Vector3f.UNIT_Y));
+        
+        controlCoxa = new RigidBodyControl(createCoxaShape(), MASS_COXA);
+
+        nodeCoxa = new Node("coxa");
+        nodeCoxa.addControl(controlCoxa);
+        placeNode(transform, controlCoxa);
+        attachChild(nodeCoxa);
+        
+        jointCoxa = new HingeJoint(baseControl, controlCoxa, pivotBase, Vector3f.ZERO,Vector3f.UNIT_Y, Vector3f.UNIT_Y);
+        jointCoxa.setLimit(0f, FastMath.PI);
+        jointCoxa.enableMotor(true, 0, 1);
+        jointCoxa.setCollisionBetweenLinkedBodys(false);
+        
+        controlFemur = new RigidBodyControl(createFemurShape(), MASS_FEMUR);
+
+        nodeFemur = new Node("femur");
+        nodeFemur.addControl(controlFemur);
+        this.placeNode(transform, controlFemur);
+        attachChild(nodeFemur);
+        
+        jointFemur = new HingeJoint(controlCoxa, controlFemur, new Vector3f(0, 0, 1.3f), Vector3f.ZERO, Vector3f.UNIT_X, Vector3f.UNIT_X);
+        jointFemur.setCollisionBetweenLinkedBodys(false);
+        jointFemur.enableMotor(true, 0f, 1);
+        
+        controlTibia = new RigidBodyControl(createTibiaShape(), MASS_TIBIA);
+        nodeTibia = new Node("tibia");
+        nodeTibia.addControl(controlTibia);
+	placeNode(transform, controlTibia);
+	attachChild(nodeTibia);
+        final Quaternion quaternion = new Quaternion();
+        quaternion.fromAngleAxis(FastMath.PI / 3, Vector3f.UNIT_X);
+        jointTibia = new HingeJoint(controlFemur, controlTibia, new Vector3f(0.25f, 4.6f, 0.25f), Vector3f.ZERO, Vector3f.UNIT_X, Vector3f.UNIT_X);
+        jointTibia.setCollisionBetweenLinkedBodys(false);
+        jointTibia.enableMotor(true, 0f, 1f);
     }
     
-    public Integer getTibiaServoPosition()
-    {
-        return AngleToTime(angleTibia,offsetTibia);
+    private void placeNode(final Transform transform, final RigidBodyControl node) {
+        node.setCollisionGroup(PhysicsCollisionObject.COLLISION_GROUP_02);
+        node.setCollideWithGroups(PhysicsCollisionObject.COLLISION_GROUP_01);
+        node.setFriction(FLOOR_FRICTION);
+        node.setPhysicsLocation(transform.getTranslation());
+        node.setPhysicsRotation(transform.getRotation().toRotationMatrix());
     }
     
-    public Integer AngleToTime(Double angle, Integer offset)
-    {
-        Double TimePerDeg = (SERVO_MAX - SERVO_MIN) / 180.0;
-        Integer result = (int)((angle + 90.0) * TimePerDeg) + SERVO_MIN + offset;
-        if (result > SERVO_MAX)
-            result = SERVO_MAX;
-        if (result < SERVO_MIN)
-            result = SERVO_MIN;
-        return result;
-    }
-    
-    
-    public HexapodLeg(Double lenCoxa, Double lenFemur, Double lenTibia, Integer offsetCoxa, Integer offsetFemur, Integer offsetTibia)
-    {
-        this.lenCoxa = lenCoxa;
-        this.lenFemur = lenFemur;
-        this.lenTibia = lenTibia;
-        this.offsetCoxa = offsetCoxa;
-        this.offsetFemur = offsetFemur;
-        this.offsetTibia = offsetTibia;
-        angleCoxa = 0.0;
-        angleFemur = 0.0;
-        angleTibia = 0.0;
-    }
-    
-    public boolean CalculateIK(Double wantedX, Double wantedY, Double wantedZ)
-    {
-        Double dist = Math.sqrt((wantedX - (double)lenCoxa) * (wantedX - (double)lenCoxa) + (wantedY * wantedY));
-        if (dist > (lenTibia + lenFemur))
-        {
-            System.out.println("HexapodLeg: NO SOLUTION POSSIBLE");
-            return false;
-        }
-        
-        Double LegLength = Math.sqrt(wantedX*wantedX + wantedZ*wantedZ);
-        //System.out.println("LegLength = " + LegLength.toString());
-        
-        
-        Double lc = LegLength - lenCoxa; 
-        Double HF = Math.sqrt((lc*lc) + (wantedY*wantedY));
-        //System.out.println("HF = " + HF.toString());
-        Double A1 = Math.atan(lc / wantedY) * RAD_TO_DEG;
-        //System.out.println("A1 = " + A1.toString());
-        Double A2 = Math.acos( ((lenTibia*lenTibia) - (lenFemur*lenFemur) - (HF*HF)) / ( -2.0 * lenFemur * HF )) * RAD_TO_DEG;
-        //System.out.println("A2 = " + A2.toString());
-        
-        Double FemurAngle = (A1 + A2);
-        
-        Double B1 = Math.acos( ((HF*HF) - (lenTibia*lenTibia) - (lenFemur*lenFemur)) / ( -2.0 * lenFemur * lenTibia ))* RAD_TO_DEG;
-        //System.out.println("B1 = " + B1.toString());
-        Double TibiaAngleServo = -(90 - B1) - 90;
-        Double TibiaAngle = TibiaAngleServo;
-        
-        Double CoxaAngle = Math.atan(wantedZ / wantedX) * RAD_TO_DEG;
-        System.out.println("HexapodLeg: IKCoxa = " + CoxaAngle.toString()+ " IKCoxaServo: " + Double.toString(CoxaAngle) + " --  " + AngleToTime(CoxaAngle,0).toString());
-        System.out.println("HexapodLeg: IKFemur = " + FemurAngle.toString() + " IKFemurServo: " + Double.toString(-FemurAngle+90.0) + " --  " + AngleToTime(-FemurAngle+90.0,0).toString());
-        System.out.println("HexapodLeg: IKTibia = " + TibiaAngle.toString()+ " IKTibiaServo: " + Double.toString(TibiaAngle+90.0) + " --  " + AngleToTime(TibiaAngle+90.0,0).toString());
-        
-      
-        //double errorDist = Math.sqrt(  );
-        
-        this.angleCoxa = CoxaAngle;
-        this.angleFemur = -FemurAngle+90.0;
-        this.angleTibia = TibiaAngle+90.0;
-        return true;
-    }
-    
-    public void CalculateFK()
-    {
-        
+    @Override
+    public void setLocalTransform(final Transform t) {
+            super.setLocalTransform(t);
+
+            for (final Spatial child : this.getChildren()) {
+                    final RigidBodyControl control = child.getControl(RigidBodyControl.class);
+                    control.setPhysicsLocation(control.getPhysicsLocation().add(t.getTranslation()));
+                    control.setPhysicsRotation(control.getPhysicsRotation().mult(t.getRotation()));
+                    child.setLocalTransform(child.getLocalTransform().combineWithParent(t));
+            }
     }
 }

@@ -4,7 +4,7 @@
  */
 package mygame;
 
-public enum HexapodLeg {
+public enum HexapodLegEnum {
 	RIGHT_FRONT,
 	RIGHT_MIDDLE,
 	RIGHT_REAR,

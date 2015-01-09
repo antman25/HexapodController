@@ -47,7 +47,7 @@ public class HexapodCalcTest extends javax.swing.JFrame {
         
         //HexapodPainter painter = new HexapodPainter();
         //panelLeg.add("Center", painter);
-        leg = new HexapodLeg((double)COXA_LENGTH,(double)FEMUR_LENGTH,(double)TIBIA_LENGTH,0,0,0);
+        //leg = new HexapodLeg((double)COXA_LENGTH,(double)FEMUR_LENGTH,(double)TIBIA_LENGTH,0,0,0);
     }
     
     void addLog(String data)
@@ -62,7 +62,7 @@ public class HexapodCalcTest extends javax.swing.JFrame {
         Double XVal = Double.parseDouble(textXVal.getText());
         Double YVal = Double.parseDouble(textYVal.getText());
         Double ZVal = Double.parseDouble(textZVal.getText());
-        leg.CalculateIK(XVal, YVal, ZVal);
+        //leg.CalculateIK(XVal, YVal, ZVal);
         
         Double dist = Math.sqrt((XVal - (double)COXA_LENGTH) * (XVal - (double)COXA_LENGTH) + (YVal * YVal));
         if (dist > (TIBIA_LENGTH + FEMUR_LENGTH))
