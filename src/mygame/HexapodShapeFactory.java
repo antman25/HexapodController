@@ -52,8 +52,8 @@ public final class HexapodShapeFactory {
             final BoxCollisionShape box = new BoxCollisionShape(new Vector3f(.25f, 2.3f, 1f));
 
             final Matrix3f rot = Matrix3f.IDENTITY;
-            rot.fromAngleAxis((FastMath.PI / 9) * 1, Vector3f.UNIT_X.mult(-1));
-            armShape.addChildShape(box, new Vector3f(.5f, 2.3f, .0f));
+            rot.fromAngleAxis((FastMath.PI) * 1, Vector3f.UNIT_X.mult(-1));
+            armShape.addChildShape(box, new Vector3f(.5f, 2.3f, .0f),rot);
             return armShape;
     }
 
