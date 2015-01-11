@@ -6,6 +6,7 @@ package hexapod;
 
 import com.jme3.asset.AssetManager;
 import com.jme3.bullet.collision.PhysicsCollisionObject;
+import com.jme3.bullet.collision.shapes.BoxCollisionShape;
 import com.jme3.bullet.collision.shapes.CapsuleCollisionShape;
 import com.jme3.bullet.collision.shapes.CollisionShape;
 import com.jme3.bullet.collision.shapes.CompoundCollisionShape;
@@ -19,15 +20,17 @@ import com.jme3.math.Matrix3f;
 import com.jme3.math.Quaternion;
 import com.jme3.math.Transform;
 import com.jme3.math.Vector3f;
+import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
+import com.jme3.scene.shape.Box;
 
 /**
  *
  * @author ANTMAN
  */
 public class HexapodLeg extends Node{
-    private static final float MASS_COXA = 1f;
-    private static final float MASS_FEMUR = 1f;
+    private static final float MASS_COXA = 5f;
+    private static final float MASS_FEMUR =5f;
     private static final float MASS_TIBIA = 1f;
     private static final float FLOOR_FRICTION = 10000f;
     
@@ -56,6 +59,28 @@ public class HexapodLeg extends Node{
     private float angleFemurCurrent;
     private float angleTibiaCurrent;
     
+    public Float getCoxaAngle()
+    {
+        if (jointCoxa == null)
+            return 0f;
+        return jointCoxa.getHingeAngle();
+    }
+    
+    public Float getFemurAngle()
+    {
+        if (jointFemur == null)
+            return 0f;
+        return jointFemur.getHingeAngle();
+    }
+    
+    public Float getTibiaAngle()
+    {
+        if (jointTibia == null)
+            return 0f;
+        return jointTibia.getHingeAngle();
+    }
+    
+    
     public Node getCoxaNode()
     {
         return nodeCoxa;
@@ -74,11 +99,13 @@ public class HexapodLeg extends Node{
     public static CollisionShape createCoxaShape() {
         final CompoundCollisionShape epauleShape = new CompoundCollisionShape();
         final CylinderCollisionShape cylinder = new CylinderCollisionShape(new Vector3f(0.50f,1.5f,0.50f));
+        //final BoxCollisionShape box = new BoxCollisionShape()
+        
         //epauleShape.addChildShape(cylinder , new Vector3f(0, 0, 0.65f));
         
         final Matrix3f rot = Matrix3f.IDENTITY;
         rot.fromAngleAxis((FastMath.PI / 2) * 1, Vector3f.UNIT_X);
-        epauleShape.addChildShape(cylinder, new Vector3f(0, -0.1f, 0f),rot);
+        epauleShape.addChildShape(cylinder, new Vector3f(0, -.025f, 0f),rot);
         return epauleShape;
         
         //CylinderCollisionShape coxaShape = new CylinderCollisionShape(new Vector3f(0.5f,1.0f,3.0f));
@@ -86,50 +113,58 @@ public class HexapodLeg extends Node{
 
     public static CollisionShape createFemurShape() {
         final CompoundCollisionShape armShape = new CompoundCollisionShape();
-        final CylinderCollisionShape cylinder = new CylinderCollisionShape(new Vector3f(0.25f,0.25f,0.25f));
+        BoxCollisionShape box = new BoxCollisionShape(new Vector3f(0.25f,1.5f,0.25f));
         
         final Matrix3f rot = Matrix3f.IDENTITY;
         rot.fromAngleAxis((FastMath.PI /2) * 1, Vector3f.UNIT_Y);
-        armShape.addChildShape(cylinder, new Vector3f(.0f, 0, 0f),rot);
+        armShape.addChildShape(box, new Vector3f(0f, 1.5f, 0f),rot);
         return armShape;
     }
 
     public static CollisionShape createTibiaShape() {
         final CompoundCollisionShape handShape = new CompoundCollisionShape();
-        final CapsuleCollisionShape capsule = new CapsuleCollisionShape(.5f, 1.2f);
+        final CapsuleCollisionShape capsule = new CapsuleCollisionShape(.5f, 4.2f);
         //handShape.addChildShape(, new Vector3f(.5f, -4.4f, .5f));
         final Matrix3f rot = Matrix3f.IDENTITY;
         rot.fromAngleAxis((FastMath.PI /2) * 1, Vector3f.UNIT_X);
-        handShape.addChildShape(capsule, new Vector3f(0, -5f, 0),rot);
+        //handShape.addChildShape(capsule, new Vector3f(-0.8f, -1f,1f),rot);
+        handShape.addChildShape(capsule, new Vector3f(0.0f, 0f,0f),rot);
         
         return handShape;
     }
     
     
     public HexapodLeg(AssetManager assetManager, RigidBodyControl baseControl, Vector3f pivotBase, float angle)
-    {       
+    {
+        Box boxMesh = new Box(1f,1f,1f); 
+        Geometry boxGeo = new Geometry("Colored Box", boxMesh); 
         final Material boxMat = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md"); 
         boxMat.setBoolean("UseMaterialColors", true); 
         boxMat.setColor("Ambient", ColorRGBA.Green); 
         boxMat.setColor("Diffuse", ColorRGBA.Green); 
-        
+        /* A colored lit cube. Needs light source! */ 
+    
+    
+    
         final Transform transform = new Transform(pivotBase, new Quaternion().fromAngleAxis(angle, Vector3f.UNIT_Y));
         
         controlCoxa = new RigidBodyControl(createCoxaShape(), MASS_COXA);
         //controlCoxa.setKinematic(true);
-        controlCoxa.clearForces();
+        
         //controlCoxa.setGravity(new Vector3f(1.0f,0.0f,0.0f));
         nodeCoxa = new Node("coxa");
+        nodeCoxa.attachChild(boxGeo);
         nodeCoxa.addControl(controlCoxa);
         nodeCoxa.setMaterial(boxMat);
-        nodeCoxa.setLocalTranslation(transform.getTranslation());
-        nodeCoxa.setLocalRotation(transform.getRotation().toRotationMatrix());
+        //nodeCoxa.setLocalTranslation(transform.getTranslation());
+        //nodeCoxa.setLocalRotation(transform.getRotation().toRotationMatrix());
         placeNode(transform, controlCoxa);
         attachChild(nodeCoxa);
         
-        jointCoxa = new HingeJoint(baseControl, controlCoxa, pivotBase, Vector3f.ZERO,Vector3f.UNIT_Y, Vector3f.UNIT_Y);
+        jointCoxa = new HingeJoint(baseControl, controlCoxa, pivotBase, new Vector3f(0.0f, 0.8f,0.0f),Vector3f.UNIT_Y, Vector3f.UNIT_Y);
         //jointCoxa.setLimit(0f, FastMath.PI);
-        jointCoxa.enableMotor(true, 1f, 1);
+        jointCoxa.enableMotor(true, 0f, 0);
+        controlCoxa.clearForces();
         jointCoxa.setCollisionBetweenLinkedBodys(false);
         angleCoxaZero = jointCoxa.getHingeAngle();
         System.out.println("angleCoxaZero: " + Float.toString(angleCoxaZero*FastMath.RAD_TO_DEG));
@@ -140,30 +175,31 @@ public class HexapodLeg extends Node{
         nodeFemur = new Node("femur");
         nodeFemur.addControl(controlFemur);
         placeNode(transform, controlFemur);
-        attachChild(nodeFemur);
         
-        jointFemur = new HingeJoint(controlCoxa, controlFemur, Vector3f.ZERO, Vector3f.ZERO, Vector3f.UNIT_X, Vector3f.UNIT_X);
+        attachChild(nodeFemur);
+        controlFemur.clearForces();
+        
+        jointFemur = new HingeJoint(controlCoxa, controlFemur, new Vector3f(0.75f,0f,0.0f), new Vector3f(0.0f,3.0f,0.0f), Vector3f.UNIT_X, Vector3f.UNIT_X);
         jointFemur.setCollisionBetweenLinkedBodys(false);
-        jointFemur.enableMotor(true, 1f, 1);
+        jointFemur.enableMotor(true, 0f, 0);
         //jointFemur.setLimit(0, FastMath.PI);
         
         angleFemurZero = jointFemur.getHingeAngle();
         System.out.println("angleFemurZero: " + Float.toString(angleFemurZero*FastMath.RAD_TO_DEG));     
         
         
-        /*controlTibia = new RigidBodyControl(createTibiaShape(), MASS_TIBIA);
+        controlTibia = new RigidBodyControl(createTibiaShape(), MASS_TIBIA);
         nodeTibia = new Node("tibia");
         nodeTibia.addControl(controlTibia);
 	placeNode(transform, controlTibia);
 	attachChild(nodeTibia);
         //final Quaternion quaternion = new Quaternion();
         //quaternion.fromAngleAxis(FastMath.PI / 3, Vector3f.UNIT_X);
-        jointTibia = new HingeJoint(controlFemur, controlTibia, new Vector3f(0.25f, 4.6f, 0.25f), Vector3f.ZERO, Vector3f.UNIT_X, Vector3f.UNIT_X);
-        jointTibia.setCollisionBetweenLinkedBodys(false);
-        jointTibia.setLimit(0, FastMath.PI);
-        jointTibia.enableMotor(true, 0f, 1f);
+        jointTibia = new HingeJoint(controlFemur, controlTibia, new Vector3f(-0.8f,0.0f, 0f), new Vector3f(0.0f,0.0f, 2.0f), Vector3f.UNIT_X, Vector3f.UNIT_X);
+        //jointTibia.setCollisionBetweenLinkedBodys(false);
+        
         angleTibiaZero = jointTibia.getHingeAngle();
-        System.out.println("angleTibiaZero: " + Float.toString(angleTibiaZero*FastMath.RAD_TO_DEG)); */
+        System.out.println("angleTibiaZero: " + Float.toString(angleTibiaZero*FastMath.RAD_TO_DEG)); 
     }
     
     private void placeNode(final Transform transform, final RigidBodyControl node) {
@@ -185,4 +221,5 @@ public class HexapodLeg extends Node{
                     child.setLocalTransform(child.getLocalTransform().combineWithParent(t));
             }
     }*/
+    
 }
