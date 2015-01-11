@@ -136,16 +136,14 @@ public class HexapodLeg extends Node{
     
     public HexapodLeg(AssetManager assetManager, RigidBodyControl baseControl, Vector3f pivotBase, float angle)
     {
-        Box boxMesh = new Box(1f,1f,1f); 
-        Geometry boxGeo = new Geometry("Colored Box", boxMesh); 
+        Box boxMesh = new Box(2f,2f,2f); 
+        Geometry boxGeo = new Geometry("Crap tacular Box", boxMesh); 
         final Material boxMat = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md"); 
         boxMat.setBoolean("UseMaterialColors", true); 
         boxMat.setColor("Ambient", ColorRGBA.Green); 
         boxMat.setColor("Diffuse", ColorRGBA.Green); 
         /* A colored lit cube. Needs light source! */ 
-    
-    
-    
+        
         final Transform transform = new Transform(pivotBase, new Quaternion().fromAngleAxis(angle, Vector3f.UNIT_Y));
         
         controlCoxa = new RigidBodyControl(createCoxaShape(), MASS_COXA);
@@ -153,9 +151,7 @@ public class HexapodLeg extends Node{
         
         //controlCoxa.setGravity(new Vector3f(1.0f,0.0f,0.0f));
         nodeCoxa = new Node("coxa");
-        nodeCoxa.attachChild(boxGeo);
         nodeCoxa.addControl(controlCoxa);
-        nodeCoxa.setMaterial(boxMat);
         //nodeCoxa.setLocalTranslation(transform.getTranslation());
         //nodeCoxa.setLocalRotation(transform.getRotation().toRotationMatrix());
         placeNode(transform, controlCoxa);
@@ -196,7 +192,7 @@ public class HexapodLeg extends Node{
         //final Quaternion quaternion = new Quaternion();
         //quaternion.fromAngleAxis(FastMath.PI / 3, Vector3f.UNIT_X);
         jointTibia = new HingeJoint(controlFemur, controlTibia, new Vector3f(-0.8f,0.0f, 0f), new Vector3f(0.0f,0.0f, 2.0f), Vector3f.UNIT_X, Vector3f.UNIT_X);
-        //jointTibia.setCollisionBetweenLinkedBodys(false);
+        jointTibia.setCollisionBetweenLinkedBodys(false);
         
         angleTibiaZero = jointTibia.getHingeAngle();
         System.out.println("angleTibiaZero: " + Float.toString(angleTibiaZero*FastMath.RAD_TO_DEG)); 
