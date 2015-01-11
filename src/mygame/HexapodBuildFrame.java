@@ -49,9 +49,16 @@ public class HexapodBuildFrame extends SimpleApplication implements ScreenContro
     private Nifty nifty;
     NiftyJmeDisplay niftyDisplay;
     BitmapText hudText;
-    HexapodLeg legLF;
     
-    private static final float MASS_BASE = 1f;
+    HexapodLeg legLF;
+    HexapodLeg legLM;
+    HexapodLeg legLR;
+    
+    HexapodLeg legRF;
+    HexapodLeg legRM;
+    HexapodLeg legRR;
+    
+    private static final float MASS_BASE = 50f;
     
     public static void main(String[] args) {
         HexapodBuildFrame frame = new HexapodBuildFrame();
@@ -73,6 +80,14 @@ public class HexapodBuildFrame extends SimpleApplication implements ScreenContro
     @Override
     public void simpleUpdate(float tpf) {
         super.simpleUpdate(tpf); //To change body of generated methods, choose Tools | Templates.
+        
+        legLF.simpleUpdate(tpf);
+        //legLM.simpleUpdate(tpf);
+        //legLR.simpleUpdate(tpf);
+        
+        legRF.simpleUpdate(tpf);
+        //legRM.simpleUpdate(tpf);
+        //legRR.simpleUpdate(tpf);
         if (hudText != null && legLF != null)
         {
             hudText.setText("Coxa: " + Float.toString(FastMath.RAD_TO_DEG*legLF.getCoxaAngle()) + " Femur: " + Float.toString(FastMath.RAD_TO_DEG*legLF.getFemurAngle()) + "Tibias: " + Float.toString(FastMath.RAD_TO_DEG*legLF.getTibiaAngle()));
@@ -172,6 +187,7 @@ public class HexapodBuildFrame extends SimpleApplication implements ScreenContro
         bulletAppState = new BulletAppState();
 	stateManager.attach(bulletAppState);
         bulletAppState.setDebugEnabled(true);
+        bulletAppState.getPhysicsSpace().setAccuracy(0.005f);
     }
     
     private void initControls()
@@ -222,7 +238,7 @@ public class HexapodBuildFrame extends SimpleApplication implements ScreenContro
     private void initScene()
     {
         sceneModel =assetManager.loadModel("Scenes/robotScene.j3o");
-        sceneModel.setLocalTranslation(0f, -10f, 0f);
+        sceneModel.setLocalTranslation(0f, -5f, 0f);
         
         CollisionShape sceneShape = CollisionShapeFactory.createMeshShape((Node) sceneModel);
 	scene = new RigidBodyControl(sceneShape, 0);
@@ -257,7 +273,7 @@ public class HexapodBuildFrame extends SimpleApplication implements ScreenContro
         //baseControl.setGravity(Vector3f.ZERO);       
         //baseControl.setKinematic(true);
         
-        HingeJoint joint = new HingeJoint(hook, baseControl, Vector3f.ZERO, new Vector3f(0.0f, -5f,0.0f),Vector3f.UNIT_Y, Vector3f.UNIT_Y);
+        //HingeJoint joint = new HingeJoint(hook, baseControl, Vector3f.ZERO, new Vector3f(0.0f, -5f,0.0f),Vector3f.UNIT_Y, Vector3f.UNIT_Y);
         //joint.enableMotor(false, 1f, 0.1f);
         
         bulletAppState.getPhysicsSpace().addAll(boxGeo);
@@ -270,13 +286,17 @@ public class HexapodBuildFrame extends SimpleApplication implements ScreenContro
         //HexapodLeg legTest = new HexapodLeg(assetManager, baseControl, new Vector3f(-3.8f, 0f, 0f), FastMath.HALF_PI);
         //rootNode.attachChild(legTest);
         //bulletAppState.getPhysicsSpace().addAll(legTest);
-        legLF = new HexapodLeg(assetManager,baseControl, new Vector3f(3.0f, 0f, 4.5f), +0.588f);
-        HexapodLeg legLM = new HexapodLeg(assetManager,baseControl, new Vector3f(3.8f, 0f, 0f), FastMath.HALF_PI);
-        HexapodLeg legLR = new HexapodLeg(assetManager,baseControl, new Vector3f(3.0f, 0f, -4.5f), FastMath.PI - 0.588f);
+        legLF = new HexapodLeg(baseControl, new Vector3f(3.0f, 0f, 4.5f), +0.588f);
+        legLF.setAngles(0.0f, FastMath.QUARTER_PI, 0.0f);
+        legLM = new HexapodLeg(baseControl, new Vector3f(3.8f, 0f, 0f), FastMath.HALF_PI);
+        legLM.setAngles(0.0f, FastMath.QUARTER_PI, 0.0f);
         
-        HexapodLeg legRF = new HexapodLeg(assetManager,baseControl, new Vector3f(-3.0f, 0f, 4.5f), -0.588f);
-        HexapodLeg legRM = new HexapodLeg(assetManager,baseControl, new Vector3f(-3.8f, 0f, 0f), -FastMath.HALF_PI);
-        HexapodLeg legRR = new HexapodLeg(assetManager,baseControl, new Vector3f(-3.0f, 0f, -4.5f), 0.588f - FastMath.PI);
+        legLR = new HexapodLeg(baseControl, new Vector3f(3.0f, 0f, -4.5f), FastMath.PI - 0.588f);
+        legLR.setAngles(0.0f, FastMath.QUARTER_PI, 0.0f);
+        
+        legRF = new HexapodLeg(baseControl, new Vector3f(-3.0f, 0f, 4.5f), -0.588f);
+        legRM = new HexapodLeg(baseControl, new Vector3f(-3.8f, 0f, 0f), -FastMath.HALF_PI);
+        legRR = new HexapodLeg(baseControl, new Vector3f(-3.0f, 0f, -4.5f), 0.588f - FastMath.PI);
         
         legLF.getCoxaNode().attachChild(boxGeo);
         rootNode.attachChild(legLF);
@@ -293,9 +313,10 @@ public class HexapodBuildFrame extends SimpleApplication implements ScreenContro
         bulletAppState.getPhysicsSpace().addAll(legLM);
         bulletAppState.getPhysicsSpace().addAll(legLR);
         
-        bulletAppState.getPhysicsSpace().addAll(legRF);
+        /*bulletAppState.getPhysicsSpace().addAll(legRF);
         bulletAppState.getPhysicsSpace().addAll(legRM);
-        bulletAppState.getPhysicsSpace().addAll(legRR);
+        bulletAppState.getPhysicsSpace().addAll(legRR);*/
+        
         
         
     }
