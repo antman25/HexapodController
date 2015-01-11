@@ -9,7 +9,6 @@ import com.jme3.bullet.BulletAppState;
 import com.jme3.bullet.collision.shapes.BoxCollisionShape;
 import com.jme3.bullet.collision.shapes.CollisionShape;
 import com.jme3.bullet.control.RigidBodyControl;
-import com.jme3.bullet.joints.HingeJoint;
 import com.jme3.bullet.util.CollisionShapeFactory;
 import com.jme3.collision.CollisionResults;
 import com.jme3.font.BitmapText;
@@ -22,6 +21,7 @@ import com.jme3.input.controls.MouseButtonTrigger;
 import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.FastMath;
+import com.jme3.math.Quaternion;
 import com.jme3.math.Ray;
 import com.jme3.math.Vector3f;
 import com.jme3.niftygui.NiftyJmeDisplay;
@@ -30,7 +30,7 @@ import com.jme3.scene.Mesh;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.debug.Arrow;
-import com.jme3.scene.shape.Box;
+import com.jme3.scene.shape.Cylinder;
 import de.lessvoid.nifty.Nifty;
 import de.lessvoid.nifty.screen.Screen;
 import de.lessvoid.nifty.screen.ScreenController;
@@ -57,8 +57,9 @@ public class HexapodBuildFrame extends SimpleApplication implements ScreenContro
     HexapodLeg legRF;
     HexapodLeg legRM;
     HexapodLeg legRR;
+    float angle = 0.0f;
     
-    private static final float MASS_BASE = 50f;
+    private static final float MASS_BASE = 20f;
     
     public static void main(String[] args) {
         HexapodBuildFrame frame = new HexapodBuildFrame();
@@ -82,15 +83,22 @@ public class HexapodBuildFrame extends SimpleApplication implements ScreenContro
         super.simpleUpdate(tpf); //To change body of generated methods, choose Tools | Templates.
         
         legLF.simpleUpdate(tpf);
-        //legLM.simpleUpdate(tpf);
-        //legLR.simpleUpdate(tpf);
+        legLM.simpleUpdate(tpf);
+        legLR.simpleUpdate(tpf);
         
         legRF.simpleUpdate(tpf);
-        //legRM.simpleUpdate(tpf);
-        //legRR.simpleUpdate(tpf);
+        legRM.simpleUpdate(tpf);
+        legRR.simpleUpdate(tpf);
         if (hudText != null && legLF != null)
         {
-            hudText.setText("Coxa: " + Float.toString(FastMath.RAD_TO_DEG*legLF.getCoxaAngle()) + " Femur: " + Float.toString(FastMath.RAD_TO_DEG*legLF.getFemurAngle()) + "Tibias: " + Float.toString(FastMath.RAD_TO_DEG*legLF.getTibiaAngle()));
+            String output = "LF Coxa: " + Float.toString(FastMath.RAD_TO_DEG*legLF.getCoxaAngle()) + " Femur: " + Float.toString(FastMath.RAD_TO_DEG*legLF.getFemurAngle()) + "Tibia: " + Float.toString(FastMath.RAD_TO_DEG*legLF.getTibiaAngle()) + "\n";
+            output += "LM Coxa: " + Float.toString(FastMath.RAD_TO_DEG*legLM.getCoxaAngle()) + " Femur: " + Float.toString(FastMath.RAD_TO_DEG*legLM.getFemurAngle()) + "Tibia: " + Float.toString(FastMath.RAD_TO_DEG*legLM.getTibiaAngle()) + "\n";
+            output += "LR Coxa: " + Float.toString(FastMath.RAD_TO_DEG*legLR.getCoxaAngle()) + " Femur: " + Float.toString(FastMath.RAD_TO_DEG*legLR.getFemurAngle()) + "Tibia: " + Float.toString(FastMath.RAD_TO_DEG*legLR.getTibiaAngle()) + "\n";
+            
+            output += "RF Coxa: " + Float.toString(FastMath.RAD_TO_DEG*legRF.getCoxaAngle()) + " Femur: " + Float.toString(FastMath.RAD_TO_DEG*legRF.getFemurAngle()) + "Tibia: " + Float.toString(FastMath.RAD_TO_DEG*legRF.getTibiaAngle()) + "\n";
+            output += "RM Coxa: " + Float.toString(FastMath.RAD_TO_DEG*legRM.getCoxaAngle()) + " Femur: " + Float.toString(FastMath.RAD_TO_DEG*legRM.getFemurAngle()) + "Tibia: " + Float.toString(FastMath.RAD_TO_DEG*legRM.getTibiaAngle()) + "\n";
+            output += "RR Coxa: " + Float.toString(FastMath.RAD_TO_DEG*legRR.getCoxaAngle()) + " Femur: " + Float.toString(FastMath.RAD_TO_DEG*legRR.getFemurAngle()) + "Tibia: " + Float.toString(FastMath.RAD_TO_DEG*legRR.getTibiaAngle()) + "\n";
+            hudText.setText(output);
         }
             
     }
@@ -119,6 +127,15 @@ public class HexapodBuildFrame extends SimpleApplication implements ScreenContro
                 {
                     guiViewPort.removeProcessor(niftyDisplay);
                 }
+            }
+            
+            if (name.equals("space"))
+            {
+                //clearAllForces();
+                angle -= FastMath.PI / 180;
+                legLF.setAngles(angle, 0.0f, 0.0f);
+                System.out.println("Setting LFCoxa to : " + Float.toString(angle * FastMath.RAD_TO_DEG));
+                
             }
             
             if (name.equals("click_left"))
@@ -182,26 +199,39 @@ public class HexapodBuildFrame extends SimpleApplication implements ScreenContro
         //nifty.setDebugOptionPanelColors(true);
     }
     
+    private void clearAllForces()
+    {
+        legLF.clearForces();
+        legLM.clearForces();
+        legLR.clearForces();
+        
+        legRF.clearForces();
+        legRM.clearForces();
+        legRR.clearForces();
+        
+    }
+    
     private void initPhysics()
     {
         bulletAppState = new BulletAppState();
 	stateManager.attach(bulletAppState);
         bulletAppState.setDebugEnabled(true);
         bulletAppState.getPhysicsSpace().setAccuracy(0.005f);
+        bulletAppState.getPhysicsSpace().setGravity(new Vector3f(0.0f,-20.0f,0.0f));
     }
     
     private void initControls()
     {
         mouseInput.setCursorVisible(true);
         inputManager.deleteMapping( SimpleApplication.INPUT_MAPPING_MEMORY );        
-        inputManager.addMapping("mouse_mode",     new KeyTrigger(KeyInput.KEY_SPACE));
+        inputManager.addMapping("space",     new KeyTrigger(KeyInput.KEY_SPACE));
         inputManager.addMapping("click_left",     new MouseButtonTrigger(MouseInput.BUTTON_LEFT) );
         inputManager.addMapping("click_mid",      new MouseButtonTrigger(MouseInput.BUTTON_MIDDLE) );
         inputManager.addMapping("click_right",    new MouseButtonTrigger(MouseInput.BUTTON_RIGHT) );
         inputManager.addMapping("console",            new KeyTrigger(KeyInput.KEY_TAB));
 
         // Test multiple listeners per mapping
-        inputManager.addListener(actionListener, "mouse_mode");
+        inputManager.addListener(actionListener, "space");
         inputManager.addListener(actionListener, "click_left");
         inputManager.addListener(actionListener, "click_mid");
         inputManager.addListener(actionListener, "click_right");
@@ -238,7 +268,7 @@ public class HexapodBuildFrame extends SimpleApplication implements ScreenContro
     private void initScene()
     {
         sceneModel =assetManager.loadModel("Scenes/robotScene.j3o");
-        sceneModel.setLocalTranslation(0f, -5f, 0f);
+        sceneModel.setLocalTranslation(0f, -2f, 0f);
         
         CollisionShape sceneShape = CollisionShapeFactory.createMeshShape((Node) sceneModel);
 	scene = new RigidBodyControl(sceneShape, 0);
@@ -252,19 +282,20 @@ public class HexapodBuildFrame extends SimpleApplication implements ScreenContro
     private void initHexapod()
     {
         final RigidBodyControl hook = new RigidBodyControl(new BoxCollisionShape(new Vector3f(.5f, 0.5f, 0.5f)),0f);
-        /* A colored lit cube. Needs light source! */ 
-        Box boxMesh = new Box(1f,1f,1f); 
-        Geometry boxGeo = new Geometry("Colored Box", boxMesh); 
-        Material boxMat = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md"); 
-        boxMat.setBoolean("UseMaterialColors", true); 
-        boxMat.setColor("Ambient", ColorRGBA.Green); 
-        boxMat.setColor("Diffuse", ColorRGBA.Green); 
-        boxGeo.setMaterial(boxMat); 
-        boxGeo.addControl(hook);
-        rootNode.attachChild(boxGeo);
-        hook.clearForces();
-        //hook.app
         
+        
+        
+        /* A colored lit cube. Needs light source! */ 
+        Cylinder boxMesh = new Cylinder(30, 30, 0.5f, 1.5f); 
+        Geometry boxGeo = new Geometry("Colored Box", boxMesh); 
+        Material boxMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md"); 
+        boxGeo.rotate(FastMath.HALF_PI, 0f, 0f);
+        // monkeyTex = assetManager.loadTexture("Interface/Logo/Monkey.jpg"); 
+        //boxMat.setTexture("ColorMap", monkeyTex); 
+        boxMat.setColor("Color", ColorRGBA.Gray);
+        boxGeo.setMaterial(boxMat); 
+        //rootNode.attachChild(boxGeo);
+       
         
         final RigidBodyControl baseControl = new RigidBodyControl(HexapodShapeFactory.createBaseShape(), MASS_BASE);
         final Node baseNode = new Node("base");
@@ -278,15 +309,7 @@ public class HexapodBuildFrame extends SimpleApplication implements ScreenContro
         
         bulletAppState.getPhysicsSpace().addAll(boxGeo);
         
-        //baseNode.getControl(RigidBodyControl.class).setPhysicsLocation(new Vector3f(0f,10f,0f));
-        
-        //rootNode.attachChild(baseNode);
-        //bulletAppState.getPhysicsSpace().add(baseNode);
-                
-        //HexapodLeg legTest = new HexapodLeg(assetManager, baseControl, new Vector3f(-3.8f, 0f, 0f), FastMath.HALF_PI);
-        //rootNode.attachChild(legTest);
-        //bulletAppState.getPhysicsSpace().addAll(legTest);
-        legLF = new HexapodLeg(baseControl, new Vector3f(3.0f, 0f, 4.5f), +0.588f);
+        legLF = new HexapodLeg(baseControl, new Vector3f(3.0f, 0f, 4.5f), .588f);
         legLF.setAngles(0.0f, FastMath.QUARTER_PI, 0.0f);
         legLM = new HexapodLeg(baseControl, new Vector3f(3.8f, 0f, 0f), FastMath.HALF_PI);
         legLM.setAngles(0.0f, FastMath.QUARTER_PI, 0.0f);
@@ -295,10 +318,15 @@ public class HexapodBuildFrame extends SimpleApplication implements ScreenContro
         legLR.setAngles(0.0f, FastMath.QUARTER_PI, 0.0f);
         
         legRF = new HexapodLeg(baseControl, new Vector3f(-3.0f, 0f, 4.5f), -0.588f);
-        legRM = new HexapodLeg(baseControl, new Vector3f(-3.8f, 0f, 0f), -FastMath.HALF_PI);
-        legRR = new HexapodLeg(baseControl, new Vector3f(-3.0f, 0f, -4.5f), 0.588f - FastMath.PI);
+        legRF.setAngles(0.0f, FastMath.QUARTER_PI, 0.0f);
         
-        legLF.getCoxaNode().attachChild(boxGeo);
+        legRM = new HexapodLeg(baseControl, new Vector3f(-3.8f, 0f, 0f), -FastMath.HALF_PI);
+        legRM.setAngles(0.0f, FastMath.QUARTER_PI, 0.0f);
+        
+        legRR = new HexapodLeg(baseControl, new Vector3f(-3.0f, 0f, -4.5f), 0.588f - FastMath.PI);
+        legRR.setAngles(0.0f, FastMath.QUARTER_PI, 0.0f);
+        
+        //legLF.getCoxaNode().attachChild(boxGeo);
         rootNode.attachChild(legLF);
         rootNode.attachChild(legLM);
         rootNode.attachChild(legLR);
@@ -309,15 +337,16 @@ public class HexapodBuildFrame extends SimpleApplication implements ScreenContro
         
         
         
+        
 	bulletAppState.getPhysicsSpace().addAll(legLF);
         bulletAppState.getPhysicsSpace().addAll(legLM);
         bulletAppState.getPhysicsSpace().addAll(legLR);
         
-        /*bulletAppState.getPhysicsSpace().addAll(legRF);
+        bulletAppState.getPhysicsSpace().addAll(legRF);
         bulletAppState.getPhysicsSpace().addAll(legRM);
-        bulletAppState.getPhysicsSpace().addAll(legRR);*/
-        
-        
+        bulletAppState.getPhysicsSpace().addAll(legRR);
+        legLF.getCoxaNode().attachChild(boxGeo);
+        //clearAllForces();
         
     }
 

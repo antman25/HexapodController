@@ -59,6 +59,13 @@ public class HexapodLeg extends Node{
     private float angleFemurCurrent=0f;
     private float angleTibiaCurrent=0f;
     
+    public void clearForces()
+    {
+        controlCoxa.clearForces();
+        controlFemur.clearForces();
+        controlTibia.clearForces();
+    }
+    
     public void setAngles(float angleCoxa, float angleFemur, float angleTibia)
     {
         this.angleCoxaTarget = angleCoxa;
@@ -125,7 +132,7 @@ public class HexapodLeg extends Node{
 
     public static CollisionShape createTibiaShape() {
         final CompoundCollisionShape handShape = new CompoundCollisionShape();
-        final CapsuleCollisionShape capsule = new CapsuleCollisionShape(.5f, 4.2f);
+        final CapsuleCollisionShape capsule = new CapsuleCollisionShape(.5f, 3.2f);
 
         final Matrix3f rot = Matrix3f.IDENTITY;
         rot.fromAngleAxis((FastMath.PI /2) * 1, Vector3f.UNIT_X);
@@ -151,6 +158,7 @@ public class HexapodLeg extends Node{
         jointCoxa.enableMotor(true, 0f, 0);
         controlCoxa.clearForces();
         jointCoxa.setCollisionBetweenLinkedBodys(false);
+        
         
         
         controlFemur = new RigidBodyControl(createFemurShape(), MASS_FEMUR);
@@ -275,33 +283,33 @@ public class HexapodLeg extends Node{
        {
            if (angleFemurCurrent - angleFemurWantedAngle < 0)
            {
-               jointFemur.enableMotor(true, 0.1f, 1.0f);
+               jointFemur.enableMotor(true, 0.1f, 2.0f);
            }
            else
            {
-               jointFemur.enableMotor(true, -0.1f, 1.0f);
+               jointFemur.enableMotor(true, -0.1f, 2.0f);
            }
        }
        else if (angleFemurDiff < (FastMath.PI / 80))
        {
            if (angleFemurCurrent - angleFemurWantedAngle < 0)
            {
-               jointFemur.enableMotor(true, 0.2f, 1.0f);
+               jointFemur.enableMotor(true, 0.2f, 2.0f);
            }
            else
            {
-               jointFemur.enableMotor(true, -0.2f, 1.0f);
+               jointFemur.enableMotor(true, -0.2f, 2.0f);
            }
        }
        else
        {
            if (angleFemurCurrent - angleFemurWantedAngle < 0)
            {
-               jointFemur.enableMotor(true, 1f, 1.0f);
+               jointFemur.enableMotor(true, 1f, 2.0f);
            }
            else
            {
-               jointFemur.enableMotor(true, -1f, 1.0f);
+               jointFemur.enableMotor(true, -1f, 2.0f);
            }
        }
        ///
