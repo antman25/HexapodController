@@ -32,6 +32,14 @@ public class HexapodLeg extends Node{
     private static final float MASS_COXA = 5f;
     private static final float MASS_FEMUR =5f;
     private static final float MASS_TIBIA = 10f;
+    
+    private static final float MOTOR_VELOCITY = 1.0f;
+    private static final float MOTOR_IMPULSE = 1.0f;
+    
+    //private static final float MASS_COXA = 0f;
+    //private static final float MASS_FEMUR =0f;
+    //private static final float MASS_TIBIA = 0f;
+    
     private static final float FLOOR_FRICTION = 10000f;
     
     
@@ -127,6 +135,7 @@ public class HexapodLeg extends Node{
         final Matrix3f rot = Matrix3f.IDENTITY;
         rot.fromAngleAxis((FastMath.PI /2) * -1, Vector3f.UNIT_Y);
         armShape.addChildShape(box, new Vector3f(0f, 1.5f, 0f),rot);
+        
         return armShape;
     }
 
@@ -235,33 +244,33 @@ public class HexapodLeg extends Node{
        {
            if (angleCoxaCurrent - angleCoxaWantedAngle < 0)
            {
-               jointCoxa.enableMotor(true, 0.1f, 1.0f);
+               jointCoxa.enableMotor(true, MOTOR_VELOCITY / 10, MOTOR_IMPULSE);
            }
            else
            {
-               jointCoxa.enableMotor(true, -0.1f, 1.0f);
+               jointCoxa.enableMotor(true, -MOTOR_VELOCITY / 10, MOTOR_IMPULSE);
            }
        }
        else if (angleCoxaDiff < (FastMath.PI / 80))
        {
            if (angleCoxaCurrent - angleCoxaWantedAngle < 0)
            {
-               jointCoxa.enableMotor(true, 0.2f, 1.0f);
+               jointCoxa.enableMotor(true, MOTOR_VELOCITY / 5, MOTOR_IMPULSE);
            }
            else
            {
-               jointCoxa.enableMotor(true, -0.2f, 1.0f);
+               jointCoxa.enableMotor(true, -MOTOR_VELOCITY / 5, MOTOR_IMPULSE);
            }
        }
        else
        {
            if (angleCoxaCurrent - angleCoxaWantedAngle < 0)
            {
-               jointCoxa.enableMotor(true, 1f, 1.0f);
+               jointCoxa.enableMotor(true, MOTOR_VELOCITY, MOTOR_IMPULSE);
            }
            else
            {
-               jointCoxa.enableMotor(true, -1f, 1.0f);
+               jointCoxa.enableMotor(true, -MOTOR_VELOCITY, MOTOR_IMPULSE);
            }
        }
        
@@ -283,33 +292,33 @@ public class HexapodLeg extends Node{
        {
            if (angleFemurCurrent - angleFemurWantedAngle < 0)
            {
-               jointFemur.enableMotor(true, 0.1f, 2.0f);
+               jointFemur.enableMotor(true, MOTOR_VELOCITY / 10, MOTOR_IMPULSE);
            }
            else
            {
-               jointFemur.enableMotor(true, -0.1f, 2.0f);
+               jointFemur.enableMotor(true, -MOTOR_VELOCITY / 10, MOTOR_IMPULSE);
            }
        }
        else if (angleFemurDiff < (FastMath.PI / 80))
        {
            if (angleFemurCurrent - angleFemurWantedAngle < 0)
            {
-               jointFemur.enableMotor(true, 0.2f, 2.0f);
+               jointFemur.enableMotor(true, MOTOR_VELOCITY / 5, MOTOR_IMPULSE);
            }
            else
            {
-               jointFemur.enableMotor(true, -0.2f, 2.0f);
+               jointFemur.enableMotor(true, -MOTOR_VELOCITY / 5, MOTOR_IMPULSE);
            }
        }
        else
        {
            if (angleFemurCurrent - angleFemurWantedAngle < 0)
            {
-               jointFemur.enableMotor(true, 1f, 2.0f);
+               jointFemur.enableMotor(true, 1f, MOTOR_IMPULSE);
            }
            else
            {
-               jointFemur.enableMotor(true, -1f, 2.0f);
+               jointFemur.enableMotor(true, -1f, MOTOR_IMPULSE);
            }
        }
        ///
@@ -386,17 +395,17 @@ public class HexapodLeg extends Node{
        
        if (Math.abs((angleCoxaCurrent - angleCoxaWantedAngle) % FastMath.TWO_PI) < FastMath.PI / 90)
        {
-           jointCoxa.enableMotor(true, 0f, 5f);
+           jointCoxa.enableMotor(true, 0f, 1f);
        }
        else
        {
            if ((angleCoxaCurrent - angleCoxaWantedAngle) < 0)
            {
-               jointCoxa.enableMotor(true, 1.0f, 5.0f);
+               jointCoxa.enableMotor(true, 1.0f, 0.1f);
            }
            else
            {
-               jointCoxa.enableMotor(true, -1.0f, 5.0f);
+               jointCoxa.enableMotor(true, -1.0f, 1.0f);
            }
        }
        /////
@@ -416,17 +425,17 @@ public class HexapodLeg extends Node{
        
        if (Math.abs((angleFemurCurrent - angleFemurWantedAngle) % FastMath.TWO_PI) < FastMath.PI / 90)
        {
-           jointFemur.enableMotor(true, 0f, 5f);
+           jointFemur.enableMotor(true, 0f, 1f);
        }
        else
        {
            if ((angleFemurCurrent - angleFemurWantedAngle) < 0)
            {
-               jointFemur.enableMotor(true, 1.0f, 5.0f);
+               jointFemur.enableMotor(true, 1.0f, 1.0f);
            }
            else
            {
-               jointFemur.enableMotor(true, -1.0f, 5.0f);
+               jointFemur.enableMotor(true, -1.0f, 1.0f);
            }
        }
        
@@ -452,11 +461,11 @@ public class HexapodLeg extends Node{
        {
            if ((angleTibiaCurrent - angleTibiaWantedAngle) < 0)
            {
-               jointTibia.enableMotor(true, 1.0f, 5.0f);
+               jointTibia.enableMotor(true, 1.0f, 1.0f);
            }
            else
            {
-               jointTibia.enableMotor(true, -1.0f, 5.0f);
+               jointTibia.enableMotor(true, -1.0f, 1.0f);
            }
        }
    }
