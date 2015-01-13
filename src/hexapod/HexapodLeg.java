@@ -40,7 +40,7 @@ public class HexapodLeg extends Node{
     //private static final float MASS_FEMUR =0f;
     //private static final float MASS_TIBIA = 0f;
     
-    private static final float FLOOR_FRICTION = 10000f;
+    private static final float FLOOR_FRICTION = 100f;
     
     
     private HingeJoint jointCoxa;

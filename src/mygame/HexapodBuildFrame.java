@@ -22,6 +22,7 @@ import com.jme3.input.controls.MouseButtonTrigger;
 import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.FastMath;
+import com.jme3.math.Quaternion;
 import com.jme3.math.Ray;
 import com.jme3.math.Vector3f;
 import com.jme3.niftygui.NiftyJmeDisplay;
@@ -109,7 +110,7 @@ public class HexapodBuildFrame extends SimpleApplication implements ScreenContro
     {
         cam.setLocation(new Vector3f(0f, 20f, -20f));
         cam.lookAt(Vector3f.ZERO, Vector3f.UNIT_Y);
-        flyCam.setMoveSpeed(75);
+        flyCam.setMoveSpeed(100);
         flyCam.setDragToRotate(true);
     }
     
@@ -187,7 +188,7 @@ public class HexapodBuildFrame extends SimpleApplication implements ScreenContro
                                                           audioRenderer,
                                                           guiViewPort);
         nifty = niftyDisplay.getNifty();
-        nifty.fromXml("Interface/guiMain.xml", "start", this);
+        nifty.fromXml("Interface/test2.xml", "start", this);
         
         hudText = new BitmapText(guiFont, false);          
         hudText.setSize(guiFont.getCharSet().getRenderedSize());      // font size
@@ -305,27 +306,28 @@ public class HexapodBuildFrame extends SimpleApplication implements ScreenContro
         //baseControl.setGravity(Vector3f.ZERO);       
         //baseControl.setKinematic(true);
         
-        //HingeJoint joint = new HingeJoint(hook, baseControl, Vector3f.ZERO, new Vector3f(0.0f, -5f,0.0f),Vector3f.UNIT_Y, Vector3f.UNIT_Y);
+        HingeJoint joint = new HingeJoint(hook, baseControl, Vector3f.ZERO, new Vector3f(0.0f, -5f,0.0f),Vector3f.UNIT_Y, Vector3f.UNIT_Y);
         //joint.enableMotor(false, 1f, 0.1f);
         
         bulletAppState.getPhysicsSpace().addAll(boxGeo);
         
-        legLF = new HexapodLeg(baseControl, new Vector3f(3.0f, 0f, 4.5f), .588f);
+        legLF = new HexapodLeg(baseControl, new Vector3f(3.0f, 10f, 4.5f), .588f);
+        legLF.rotate(new Quaternion(0.0f, 1.0f, 0f, FastMath.HALF_PI));
         legLF.setAngles(0.0f, 0.0f, 0.0f);
         legLM = new HexapodLeg(baseControl, new Vector3f(3.8f, 0f, 0f), FastMath.HALF_PI);
-        legLM.setAngles(0.0f, FastMath.QUARTER_PI, 0.0f);
+        //legLM.setAngles(0.0f, FastMath.QUARTER_PI, 0.0f);
         
         legLR = new HexapodLeg(baseControl, new Vector3f(3.0f, 0f, -4.5f), FastMath.PI - 0.588f);
-        legLR.setAngles(0.0f, FastMath.QUARTER_PI, 0.0f);
+        //legLR.setAngles(0.0f, FastMath.QUARTER_PI, 0.0f);
         
         legRF = new HexapodLeg(baseControl, new Vector3f(-3.0f, 0f, 4.5f), -0.588f);
-        legRF.setAngles(0.0f, FastMath.QUARTER_PI, 0.0f);
+        //legRF.setAngles(0.0f, FastMath.QUARTER_PI, 0.0f);
         
         legRM = new HexapodLeg(baseControl, new Vector3f(-3.8f, 0f, 0f), -FastMath.HALF_PI);
-        legRM.setAngles(0.0f, FastMath.QUARTER_PI, 0.0f);
+        //legRM.setAngles(0.0f, FastMath.QUARTER_PI, 0.0f);
         
         legRR = new HexapodLeg(baseControl, new Vector3f(-3.0f, 0f, -4.5f), 0.588f - FastMath.PI);
-        legRR.setAngles(0.0f, FastMath.QUARTER_PI, 0.0f);
+        //legRR.setAngles(0.0f, FastMath.QUARTER_PI, 0.0f);
         
         //legLF.getCoxaNode().attachChild(boxGeo);
         rootNode.attachChild(legLF);

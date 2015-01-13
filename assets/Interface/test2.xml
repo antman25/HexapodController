@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<nifty xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://nifty-gui.lessvoid.com/nifty-gui" xsi:schemaLocation="https://raw.githubusercontent.com/void256/nifty-gui/1.4/nifty-core/src/main/resources/nifty.xsd https://raw.githubusercontent.com/void256/nifty-gui/1.4/nifty-core/src/main/resources/nifty.xsd">
+    <useControls filename="nifty-default-controls.xml"/>
+    <useStyles filename="nifty-default-styles.xml"/>
+    <screen id="start">
+        <layer id="starter" childLayout="absolute" x="0%" width="100%" y="0%" height="25.0%">
+            <panel id="GPanel6" childLayout="absolute" backgroundColor="#ff3333ff" width="100.0%" x="1" y="446" style="nifty-panel-simple" height="25.0%"/>
+        </layer>
+    </screen>
+</nifty>

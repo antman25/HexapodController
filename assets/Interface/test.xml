@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<nifty xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://nifty-gui.lessvoid.com/nifty-gui" xsi:schemaLocation="https://raw.githubusercontent.com/void256/nifty-gui/1.4/nifty-core/src/main/resources/nifty.xsd https://raw.githubusercontent.com/void256/nifty-gui/1.4/nifty-core/src/main/resources/nifty.xsd">
+    <useControls filename="nifty-default-controls.xml"/>
+    <useStyles filename="nifty-default-styles.xml"/>
+    <screen id="GScreen0">
+        <layer id="GLayer0" childLayout="absolute"/>
+        <layer id="GLayer2" childLayout="absolute">
+            <panel id="GPanel2" height="43%" style="nifty-panel-simple" width="81%" childLayout="absolute" y="41" x="66">
+                <control name="button" id="GButton1" height="30px" width="117px" label="GButton1" childLayout="center" y="226px" x="529px"/>
+                <control name="verticalSlider" id="GVSlider0" height="100px" y="4" x="8"/>
+                <control name="button" id="GButton2" label="GButton2" childLayout="center" y="231" x="8"/>
+                <control name="listBox" id="GListBox1" height="152px" width="145px" y="12" x="492"/>
+            </panel>
+        </layer>
+    </screen>
+</nifty>
